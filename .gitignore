@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment / secrets — NEVER commit these
+.env
+**/.env
+*.env.local
+*.env.*.local
+
+# Build output
+frontend/dist/
+frontend/tsconfig.app.tsbuildinfo
+frontend/tsconfig.node.tsbuildinfo
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Temp / lock files that were accidentally created
+nul
+
+# LibreOffice lock files
+~$*
+
+# Claude settings (local only)
+.claude/settings.local.json

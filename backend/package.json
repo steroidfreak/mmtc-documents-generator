@@ -1,0 +1,21 @@
+{
+  "name": "mmtc-pdf-backend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node src/server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
+    "archiver": "^6.0.2",
+    "cors": "^2.8.5",
+    "docxtemplater": "^3.49.0",
+    "dotenv": "^17.3.1",
+    "exceljs": "^4.4.0",
+    "express": "^4.19.2",
+    "multer": "^2.1.0",
+    "pdf-lib": "^1.17.1",
+    "pizzip": "^3.1.7"
+  }
+}
