@@ -3,7 +3,10 @@ import path from "path";
 import fs from "fs/promises";
 import { PDFDocument } from "pdf-lib";
 
-const SOFFICE = "C:\\Program Files\\LibreOffice\\program\\soffice.exe";
+import os from "os";
+const SOFFICE = os.platform() === "win32"
+  ? "C:\\Program Files\\LibreOffice\\program\\soffice.exe"
+  : "soffice";
 const DEFAULT_TIMEOUT_MS = 180_000; // 3 minutes per conversion
 
 function runExecFile(cmd, args, timeoutMs) {
