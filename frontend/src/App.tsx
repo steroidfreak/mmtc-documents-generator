@@ -91,6 +91,7 @@ function defaultServiceSelections() {
 export default function App() {
   const [loading, setLoading] = useState<Stage | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [readyFiles, setReadyFiles] = useState<{ name: string; url: string }[]>([]);
 
   const [employerSalutation, setEmployerSalutation] = useState("Mr.");
   const [employerName, setEmployerName] = useState("");
@@ -191,8 +192,9 @@ export default function App() {
     };
   }
 
-  async function downloadFiles(stage: Stage) {
+  async function generateFiles(stage: Stage) {
     setErr(null);
+    setReadyFiles([]);
     setLoading(stage);
     try {
       const res = await fetch(`${API_BASE}/api/generate`, {
@@ -208,18 +210,12 @@ export default function App() {
 
       const { files } = await res.json() as { files: { name: string; data: string }[] };
 
-      for (const file of files) {
+      const ready = files.map((file) => {
         const bytes = Uint8Array.from(atob(file.data), (c) => c.charCodeAt(0));
         const blob = new Blob([bytes], { type: "application/pdf" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = file.name;
-        a.click();
-        URL.revokeObjectURL(url);
-        // Small delay so browser doesn't block multiple downloads
-        await new Promise((r) => setTimeout(r, 300));
-      }
+        return { name: file.name, url: URL.createObjectURL(blob) };
+      });
+      setReadyFiles(ready);
     } catch (e: any) {
       setErr(e?.message ?? String(e));
     } finally {
@@ -587,15 +583,15 @@ export default function App() {
         </div>
 
         <div className="actions">
-          <button disabled={!canGenerate || loading !== null} onClick={() => downloadFiles("initial")}>
-            {loading === "initial" ? "Generating..." : "Download Initial Package"}
+          <button disabled={!canGenerate || loading !== null} onClick={() => generateFiles("initial")}>
+            {loading === "initial" ? "Generating..." : "Generate Initial Package"}
           </button>
           <button
             disabled={!canGenerate || !hasValidConfirmedDate || loading !== null}
-            onClick={() => downloadFiles("revised")}
+            onClick={() => generateFiles("revised")}
             title={!hasValidConfirmedDate ? "Enter confirmed start date above to enable" : undefined}
           >
-            {loading === "revised" ? "Generating..." : "Download Revised Package"}
+            {loading === "revised" ? "Generating..." : "Generate Revised Package"}
           </button>
           <button className="secondary" onClick={fillSample} disabled={loading !== null}>
             Fill sample
@@ -604,12 +600,29 @@ export default function App() {
 
         {err ? <div className="note" style={{ color: "#b00020" }}><b>Error:</b> {err}</div> : null}
 
+        {readyFiles.length > 0 && (
+          <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 10, padding: "12px 16px", marginTop: 12 }}>
+            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}>Files ready — tap each to open / save:</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {readyFiles.map(({ name, url }) => (
+                <a
+                  key={name}
+                  href={url}
+                  download={name}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ fontSize: 14, color: "#15803d", fontWeight: 500 }}
+                >
+                  {name}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="note">
           <b>Initial Package:</b> Employment_Contract.pdf, Salary_Payment_Schedule.pdf, Invoice-01.pdf<br />
           <b>Revised Package:</b> Salary_Payment_Schedule_Revised.pdf, Invoice-02.pdf … Invoice-N.pdf. Enter confirmed start date above to unlock.
-        </div>
-        <div className="note">
-          <b>Important:</b> Backend converts DOCX/XLSX to PDF using <b>LibreOffice</b> on Windows.
         </div>
       </div>
     </div>
