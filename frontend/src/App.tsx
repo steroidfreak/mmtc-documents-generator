@@ -53,6 +53,7 @@ type Payload = {
   totalLoan: number;
   monthlyDeduction: number;
   loanMonths: number;
+  extraDeduction?: number;
   startWorkMonthText: string;
   employerInitials: string;
   additionalServicesInvoice1: { description: string; amount: number | string }[];
@@ -109,6 +110,8 @@ export default function App() {
 
   const [monthlyDeduction, setMonthlyDeduction] = useState<number>(480);
   const [loanMonths, setLoanMonths] = useState<number>(7);
+  const [hasExtraMonth, setHasExtraMonth] = useState<boolean>(false);
+  const [extraDeduction, setExtraDeduction] = useState<number>(200);
   const totalLoan = useMemo(
     () => Math.max(0, Number(monthlyDeduction || 0) * Number(loanMonths || 0)),
     [monthlyDeduction, loanMonths]
@@ -173,6 +176,7 @@ export default function App() {
       totalLoan,
       monthlyDeduction,
       loanMonths,
+      ...(hasExtraMonth && extraDeduction > 0 ? { extraDeduction } : {}),
       startWorkMonthText,
       employerInitials,
       additionalServicesInvoice1: selectedServiceLines
@@ -479,6 +483,32 @@ export default function App() {
           <div className="field">
             <label>Loan Months</label>
             <input type="number" value={loanMonths} onChange={(e) => setLoanMonths(Number(e.target.value))} />
+          </div>
+          <div className="field">
+            <label>
+              <input
+                type="checkbox"
+                checked={hasExtraMonth}
+                onChange={(e) => setHasExtraMonth(e.target.checked)}
+                style={{ marginRight: 6 }}
+              />
+              Add extra deduction month (Month {loanMonths + 1})
+            </label>
+            {hasExtraMonth && (
+              <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6 }}>
+                <input
+                  type="number"
+                  min={0}
+                  max={monthlyWage}
+                  value={extraDeduction}
+                  onChange={(e) => setExtraDeduction(Number(e.target.value))}
+                  style={{ width: 100 }}
+                />
+                <span style={{ fontSize: 12, color: "#666" }}>
+                  Deduct ${extraDeduction || 0} → Helper receives ${Math.max(0, monthlyWage - (extraDeduction || 0))}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

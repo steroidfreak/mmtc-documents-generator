@@ -102,6 +102,9 @@ export async function buildScheduleXlsx({ templatesDir, outDir, data }) {
   const monthlyWage = Number(data.monthlyWage ?? 550);
   const monthlyDeduction = Number(data.monthlyDeduction ?? 480);
   const loanMonths = Number(data.loanMonths ?? 7);
+  const extraDeduction = Number(data.extraDeduction ?? 0);
+  const hasExtra = extraDeduction > 0;
+  const extraMonthIndex = loanMonths + 1;
   const { date: parsedDate, monthOnly } = parseStartDate(data.startWorkMonthText);
   const startDate = parsedDate ?? new Date();
 
@@ -123,8 +126,14 @@ export async function buildScheduleXlsx({ templatesDir, outDir, data }) {
 
   for (let i = 1; i <= 24; i++) {
     const r = startRow + (i - 1);
-    const deduction = i <= loanMonths ? monthlyDeduction : 0;
+    let deduction = 0;
+    if (i <= loanMonths) {
+      deduction = monthlyDeduction;
+    } else if (hasExtra && i === extraMonthIndex) {
+      deduction = extraDeduction;
+    }
     const receive = monthlyWage - deduction;
+    const isDeductionMonth = i <= loanMonths || (hasExtra && i === extraMonthIndex);
 
     // Period: from = start + (i-1) months, to = start + i months - 1 day
     let fromDate, toDate;
@@ -155,13 +164,13 @@ export async function buildScheduleXlsx({ templatesDir, outDir, data }) {
       salaryPaymentDate = "Upon Confirm";
     } else if (i === 2) {
       salaryPaymentDate = monthOnly ? `End ${ordinal(i)} month` : fmtShort(startDate);
-    } else if (i <= loanMonths) {
+    } else if (isDeductionMonth) {
       salaryPaymentDate = monthOnly ? `End ${ordinal(i)} month` : fmtShort(toDate);
     }
     ws.getRow(r).getCell(colSalaryPaymentDate).value = salaryPaymentDate;
     ws.getRow(r).getCell(colSalary).value = money(monthlyWage);
     ws.getRow(r).getCell(colOffDay).value = "-";
-    ws.getRow(r).getCell(colDeduct).value = i <= loanMonths ? money(deduction) : "-";
+    ws.getRow(r).getCell(colDeduct).value = isDeductionMonth ? money(deduction) : "-";
     ws.getRow(r).getCell(colReceive).value = money(receive);
   }
 
